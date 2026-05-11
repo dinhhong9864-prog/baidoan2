@@ -1,96 +1,78 @@
-// Portfolio interactive effects: theme toggle, scroll reveal, typing and cursor glow
+const navToggle = document.getElementById('navToggle');
+const mobileMenu = document.getElementById('mobileMenu');
+const mobileClose = document.getElementById('mobileClose');
 const themeToggle = document.getElementById('themeToggle');
 const body = document.body;
+const progressBar = document.getElementById('progressBar');
 const revealElements = document.querySelectorAll('.reveal');
-const scrollProgress = document.getElementById('scrollProgress');
-const menuToggle = document.getElementById('menuToggle');
-const navbar = document.getElementById('navbar');
-const cursorGlow = document.getElementById('cursorGlow');
-const heroTyping = document.querySelector('.hero-typing');
+const typingElement = document.querySelector('.typing');
+const typeWords = ['Sáng tạo UI/UX', 'Thiết kế pastel', 'Câu chuyện du lịch', 'Người kể chuyện số'];
+let typeIndex = 0;
+let charIndex = 0;
 
-function setTheme(theme) {
-  if (theme === 'dark') {
-    body.setAttribute('data-theme', 'dark');
-    themeToggle.innerHTML = '<span class="icon">☀️</span><span>Light mode</span>';
-  } else {
-    body.removeAttribute('data-theme');
-    themeToggle.innerHTML = '<span class="icon">🌙</span><span>Dark mode</span>';
-  }
+function updateProgress() {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+  progressBar.style.width = `${progress}%`;
 }
 
-function loadTheme() {
-  const storedTheme = localStorage.getItem('portfolio-theme');
-  setTheme(storedTheme === 'dark' ? 'dark' : 'light');
-}
-
-function toggleTheme() {
-  const currentTheme = body.getAttribute('data-theme');
-  const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  setTheme(nextTheme);
-  localStorage.setItem('portfolio-theme', nextTheme);
-}
-
-function handleScrollReveal() {
-  const triggerBottom = window.innerHeight * 0.9;
-  revealElements.forEach((element) => {
-    const rect = element.getBoundingClientRect();
-    if (rect.top < triggerBottom) {
-      element.classList.add('show');
+function revealOnScroll() {
+  const trigger = window.innerHeight * 0.92;
+  revealElements.forEach((el) => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < trigger) {
+      el.classList.add('show');
     }
   });
 }
 
-function handleScrollProgress() {
-  const scrollTop = window.scrollY;
-  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-  const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-  scrollProgress.style.width = `${progress}%`;
+function toggleMobileMenu() {
+  mobileMenu.classList.toggle('active');
 }
 
-function toggleNavbar() {
-  navbar.classList.toggle('active');
+function toggleTheme() {
+  if (body.dataset.theme === 'dark') {
+    body.removeAttribute('data-theme');
+    localStorage.setItem('portfolio-theme', 'light');
+  } else {
+    body.dataset.theme = 'dark';
+    localStorage.setItem('portfolio-theme', 'dark');
+  }
 }
 
-function updateCursor(e) {
-  cursorGlow.style.left = `${e.clientX}px`;
-  cursorGlow.style.top = `${e.clientY}px`;
-  cursorGlow.style.opacity = 1;
+function loadTheme() {
+  const saved = localStorage.getItem('portfolio-theme');
+  if (saved === 'dark') body.dataset.theme = 'dark';
 }
 
-function hideCursor() {
-  cursorGlow.style.opacity = 0;
+function typeWriter() {
+  if (!typingElement) return;
+  const current = typeWords[typeIndex];
+  if (charIndex < current.length) {
+    typingElement.textContent += current.charAt(charIndex);
+    charIndex += 1;
+    setTimeout(typeWriter, 90);
+  } else {
+    setTimeout(() => {
+      typingElement.textContent = '';
+      charIndex = 0;
+      typeIndex = (typeIndex + 1) % typeWords.length;
+      typeWriter();
+    }, 1800);
+  }
 }
 
-function initTyping() {
-  if (!heroTyping) return;
-  const items = Array.from(heroTyping.children).map((span) => span.textContent);
-  let currentIndex = 0;
-  const update = () => {
-    heroTyping.innerHTML = `<span>${items[currentIndex]}</span>`;
-    currentIndex = (currentIndex + 1) % items.length;
-  };
-  update();
-  setInterval(update, 3200);
-}
-
+navToggle.addEventListener('click', toggleMobileMenu);
+mobileClose.addEventListener('click', toggleMobileMenu);
 themeToggle.addEventListener('click', toggleTheme);
-menuToggle.addEventListener('click', toggleNavbar);
 window.addEventListener('scroll', () => {
-  handleScrollReveal();
-  handleScrollProgress();
+  updateProgress();
+  revealOnScroll();
 });
-window.addEventListener('mousemove', updateCursor);
-window.addEventListener('mouseout', hideCursor);
 window.addEventListener('load', () => {
   loadTheme();
-  handleScrollReveal();
-  handleScrollProgress();
-  initTyping();
-});
-
-const links = navbar.querySelectorAll('a');
-links.forEach((link) => {
-  link.addEventListener('click', () => {
-    navbar.classList.remove('active');
-  });
+  updateProgress();
+  revealOnScroll();
+  typeWriter();
 });
